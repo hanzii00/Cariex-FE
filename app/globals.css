@@ -12,6 +12,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@font-face {
+  font-family: "MonainnRegular";
+  src: url("/font/MonainnRegular.otf") format("opentype"),
+       url("/font/MonainnRegular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

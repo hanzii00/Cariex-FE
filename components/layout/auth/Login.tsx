@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Eye, EyeClosed, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 
 interface LoginProps {
   onSuccess?: () => void;

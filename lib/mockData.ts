@@ -1,3 +1,35 @@
+export type Patient = {
+  id: number;
+  name: string;
+  age: number;
+  gender: string;
+  email?: string;
+  phone?: string;
+  lastVisit?: Date;
+  riskProfile?: string;
+  notes?: string;
+};
+
+export type Scan = {
+  id: number;
+  patientId: number;
+  date: Date;
+  imageUrl: string;
+  type: string;
+  status: string;
+};
+
+export type Analysis = {
+  id: number;
+  scanId: number;
+  severity: string;
+  confidence: number;
+  findings: string[];
+  heatmapOverlayUrl?: string;
+  aiNotes?: string;
+  createdAt: Date;
+};
+
 export const MOCK_PATIENTS: Patient[] = [
   {
     id: 1,

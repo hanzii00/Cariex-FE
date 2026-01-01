@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { MOCK_PATIENTS, delay } from '@/lib/mockData';
+import { MOCK_PATIENTS, delay, type Patient } from '@/lib/mockData';
 
-// This is a mock hook simulating a react-query hook
+// This is a mock hook
 export function usePatients() {
   const [data, setData] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);

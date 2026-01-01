@@ -1,13 +1,16 @@
-import { Link, useLocation } from 'wouter';
+"use client";
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { LayoutDashboard, Users, UploadCloud, LogOut, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const location = usePathname() || '/';
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/patients', label: 'Patient Records', icon: Users },
     { href: '/upload', label: 'AI Analysis', icon: UploadCloud },
   ];

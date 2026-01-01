@@ -1,5 +1,3 @@
-import { type Patient, type Scan, type Analysis } from "@shared/schema";
-
 export const MOCK_PATIENTS: Patient[] = [
   {
     id: 1,
@@ -110,3 +108,12 @@ export const MOCK_ANALYSES: Analysis[] = [
 
 // Helper to simulate API delay
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fallback logic for frontend-only mode
+export const getAnalysisOrDefault = (id: number): any => {
+  return MOCK_ANALYSES.find(a => a.id === id) || MOCK_ANALYSES[0];
+};
+
+export const getScanOrDefault = (id: number): any => {
+  return MOCK_SCANS.find(s => s.id === id) || MOCK_SCANS[0];
+};

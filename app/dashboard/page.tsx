@@ -1,5 +1,4 @@
 "use client";
-
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, AlertCircle, CheckCircle, TrendingUp, Activity } from 'lucide-react';

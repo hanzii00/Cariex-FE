@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { MOCK_PATIENTS, delay } from '@/lib/mockData';
-import { type Patient } from '@shared/schema';
 
 // This is a mock hook simulating a react-query hook
 export function usePatients() {

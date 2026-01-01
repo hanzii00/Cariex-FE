@@ -67,12 +67,12 @@ export default function Home() {
       </header>
 
       {/* HERO SECTION (Centered Layout) */}
-      <section className="relative w-full bg-gradient-to-b from-blue-800 to-blue-600 text-white overflow-hidden pt-40 pb-24 flex-grow">
+      <section className="relative w-full bg-linear-to-b from-blue-800 to-blue-600 text-white overflow-hidden pt-40 pb-24 grow">
         
         {/* Background Decorative Circles */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/10 rounded-full pointer-events-none"></div>
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border border-white/5 rounded-full pointer-events-none"></div>
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] border border-white/5 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 border border-white/10 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-225 h-225 border border-white/5 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-300 h-300 border border-white/5 rounded-full pointer-events-none"></div>
 
         <div className="container mx-auto px-6 relative z-10 flex flex-col items-center text-center">
           

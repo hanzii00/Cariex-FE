@@ -1,11 +1,11 @@
 "use client";
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { usePatients } from '@/hooks/use-patients';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';

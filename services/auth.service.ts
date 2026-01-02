@@ -1,0 +1,45 @@
+import { LoginData, RegisterData } from "@/types/auth.type";
+import { API_URL, handleResponse } from "./helper.service";
+
+export async function login({ email, password }: LoginData) {
+  const res = await fetch(`${API_URL}/auth/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await handleResponse(res);
+
+  if (data?.access && data?.refresh) {
+    localStorage.setItem("access", data.access);
+    localStorage.setItem("refresh", data.refresh);
+  }
+
+  return data;
+}
+
+export async function register({ email, password }: RegisterData) {
+  const res = await fetch(`${API_URL}/auth/register/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await handleResponse(res);
+  return data;
+}
+
+export function logout() {
+  const refresh = localStorage.getItem("refresh");
+
+  if (refresh) {
+    fetch(`${API_URL}/auth/logout/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    }).catch(() => {});
+  }
+
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+}

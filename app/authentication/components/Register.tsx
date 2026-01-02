@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/sonner";
 import { Eye, EyeClosed, Lock, Mail, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface RegisterProps {
   onSuccess?: () => void;

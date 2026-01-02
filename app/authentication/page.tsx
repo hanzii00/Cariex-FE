@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "@/components/ui/sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Login from "@/app/authentication/components/Login";
 import Register from "@/app/authentication/components/Register";
@@ -12,6 +12,13 @@ import Register from "@/app/authentication/components/Register";
 export default function AuthenticationPage() {
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams?.get("mode") === "register") {
+      setIsLogin(false);
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">

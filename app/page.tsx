@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Menu
 } from "lucide-react";
+import Link from "next/link";
 
 // Font Configuration
 const montserrat = Montserrat({
@@ -23,7 +24,7 @@ export default function Home() {
     <main className={`${montserrat.variable} ${inter.variable} min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100 flex flex-col`}>
       
       {/* NEW HEADER SECTION */}
-      <header className="absolute top-0Left w-full z-50 py-4 border-b border-white/10 bg-blue-900/20 backdrop-blur-md">
+      <header className="absolute top-0 left-0 w-full z-50 py-4 border-b border-white/10 bg-blue-900/20 backdrop-blur-md">
         <div className="container mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
@@ -52,12 +53,12 @@ export default function Home() {
 
           {/* Login/Signup Buttons */}
           <div className="flex items-center gap-4">
-            <button className="hidden md:block text-sm font-semibold text-blue-100 hover:text-white transition-colors px-4 py-2">
+            <Link href="/authentication" className="hidden md:block text-sm font-semibold text-blue-100 hover:text-white transition-colors px-4 py-2">
               Log In
-            </button>
-            <button className="bg-blue-600 text-sm font-semibold text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-500 transition-all flex items-center gap-2">
+            </Link>
+            <Link href="/authentication?mode=register" className="bg-blue-600 text-sm font-semibold text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-500 transition-all flex items-center gap-2">
               Sign Up <ArrowRight size={16} />
-            </button>
+            </Link>
             {/* Mobile Menu Icon */}
             <button className="md:hidden text-blue-100">
                <Menu size={24} />
@@ -86,7 +87,7 @@ export default function Home() {
           </div>
 
           {/* Centered Headlines */}
-          <h1 className="font-heading text-4xl md:text-6xl font-bold leading-tight max-w-5xl mb-6">
+          <h1 className="font-heading text-white text-4xl md:text-6xl font-bold leading-tight max-w-5xl mb-6">
             AI-Assisted Early Dental <br className="hidden md:block" /> Caries Detection
           </h1>
           

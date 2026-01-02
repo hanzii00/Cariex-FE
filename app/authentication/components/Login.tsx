@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/sonner";
 import { Eye, EyeClosed, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import Link from "next/link";
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -77,12 +78,12 @@ export default function Login({ onSuccess }: LoginProps) {
       </div>
 
       <div className="flex justify-end -mt-3">
-        <a
+        <Link
           href="/forgot-password"
           className="text-xs text-blue-600 hover:underline hover:text-blue-700 transition-all duration-200"
         >
           Forgot password?
-        </a>
+        </Link>
       </div>
 
       <Button

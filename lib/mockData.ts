@@ -1,4 +1,34 @@
-import { type Patient, type Scan, type Analysis } from "@shared/schema";
+export type Patient = {
+  id: number;
+  name: string;
+  age: number;
+  gender: string;
+  email?: string;
+  phone?: string;
+  lastVisit?: Date;
+  riskProfile?: string;
+  notes?: string;
+};
+
+export type Scan = {
+  id: number;
+  patientId: number;
+  date: Date;
+  imageUrl: string;
+  type: string;
+  status: string;
+};
+
+export type Analysis = {
+  id: number;
+  scanId: number;
+  severity: string;
+  confidence: number;
+  findings: string[];
+  heatmapOverlayUrl?: string;
+  aiNotes?: string;
+  createdAt: Date;
+};
 
 export const MOCK_PATIENTS: Patient[] = [
   {
@@ -110,3 +140,12 @@ export const MOCK_ANALYSES: Analysis[] = [
 
 // Helper to simulate API delay
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fallback logic for frontend-only mode
+export const getAnalysisOrDefault = (id: number): any => {
+  return MOCK_ANALYSES.find(a => a.id === id) || MOCK_ANALYSES[0];
+};
+
+export const getScanOrDefault = (id: number): any => {
+  return MOCK_SCANS.find(s => s.id === id) || MOCK_SCANS[0];
+};

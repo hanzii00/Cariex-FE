@@ -1,11 +1,10 @@
 "use client";
-
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, AlertCircle, CheckCircle, TrendingUp, Activity } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { usePatients } from '@/hooks/use-patients';
-import { Link } from 'wouter';
+import Link from 'next/link';
 
 const data = [
   { name: 'Mon', scans: 4 },

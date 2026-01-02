@@ -32,7 +32,7 @@ export default function AuthenticationPage() {
           <p className="text-blue-100">Advanced Dental Intelligence System</p>
         </div>
 
-        <Card className="border-0 shadow-2xl overflow-hidden p-8">
+        <Card className="border-0 shadow-2xl overflow-hidden py-8 px-3">
           <CardHeader className="bg-white gap-1">
             <CardTitle className="text-2xl text-center">
               {isLogin ? "Welcome to Cariex" : "Create an Account"}

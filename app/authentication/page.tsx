@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import Login from "@/components/layout/auth/Login";
-import Register from "@/components/layout/auth/Register";
+import Login from "@/app/authentication/components/Login";
+import Register from "@/app/authentication/components/Register";
 
 export default function AuthenticationPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const router = useRouter();
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
@@ -32,7 +35,7 @@ export default function AuthenticationPage() {
         <Card className="border-0 shadow-2xl overflow-hidden p-8">
           <CardHeader className="bg-white gap-1">
             <CardTitle className="text-2xl text-center">
-              {isLogin ? "Welcome Back" : "Create an Account"}
+              {isLogin ? "Welcome to Cariex" : "Create an Account"}
             </CardTitle>
             <CardDescription className="text-center text-sm">
               {isLogin
@@ -50,9 +53,9 @@ export default function AuthenticationPage() {
               transition={{ duration: 0.3 }}
             >
               {isLogin ? (
-                <Login onSuccess={() => console.log("Logged in!")} />
+                <Login onSuccess={() => router.push('/dashboard')} />
               ) : (
-                <Register onSuccess={() => console.log("Registered!")} />
+                <Register onSuccess={() => { setIsLogin(true); toast.info('Please check your email to verify your account.'); }} />
               )}
             </motion.div>
 

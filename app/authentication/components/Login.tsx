@@ -16,7 +16,7 @@ export default function Login({ onSuccess }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -26,11 +26,17 @@ export default function Login({ onSuccess }: LoginProps) {
       return;
     }
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { login } = await import("@/services/auth.service");
+      await login({ email, password });
       toast.success("Login successful!");
       if (onSuccess) onSuccess();
-    }, 1500);
+    } catch (err: any) {
+      const message = err?.message || (typeof err === "string" ? err : "Login failed.");
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

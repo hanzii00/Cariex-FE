@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeClosed, Lock, Mail } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 interface RegisterProps {
   onSuccess?: () => void;
 }
 
 export default function Register({ onSuccess }: RegisterProps) {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,8 +19,13 @@ export default function Register({ onSuccess }: RegisterProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!username.trim()) {
+      toast.error("Please enter a username");
+      return;
+    }
 
     if (!email.includes("@")) {
       toast.error("Please enter a valid email address!");
@@ -37,15 +43,43 @@ export default function Register({ onSuccess }: RegisterProps) {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Registration successful!");
+    try {
+      const { register } = await import("@/services/auth.service");
+      await register({ username, email, password, password2: confirmPassword });
+      toast.success("Registration successful! Please check your email to verify your account.");
       if (onSuccess) onSuccess();
-    }, 1500);
-  };
+    } catch (err: any) {
+      const message = err?.message || "Registration failed.";
+      const fields = err?.fields;
+
+      if (fields && typeof fields === "object") {
+        const msgs = Object.values(fields)
+          .flat()
+          .map((v: any) => (Array.isArray(v) ? v.join(" ") : String(v)))
+          .join(" ");
+        toast.error(msgs || message);
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }; 
 
   return (
     <form onSubmit={handleRegister} className="space-y-5">
+      <div className="relative">
+        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Input
+          type="text"
+          placeholder="Username"
+          className="pl-12 h-11 bg-slate-50 border-slate-200"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+      </div>
+
       <div className="relative">
         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input

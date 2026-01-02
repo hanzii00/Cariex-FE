@@ -158,3 +158,17 @@
 .text-gradient {
   @apply bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-cyan-500;
 }
+
+.Toastify__toast-icon {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.Toastify__toast-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.Toastify__toast {
+  min-height: 55px !important;
+}

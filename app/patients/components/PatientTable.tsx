@@ -3,10 +3,10 @@
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
 import { PatientRow } from "./PatientRow";
-import { Patient } from "@/lib/mockData";
+import { Patient } from "@/types/patient.type";
 
 interface Props {
-  patients: Patient[];
+  patients: Partial<Patient>[];
   isLoading: boolean;
 }
 

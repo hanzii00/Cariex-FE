@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { LayoutDashboard, Users, UploadCloud, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const location = usePathname() || "/";
+  const router = useRouter();
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -70,12 +71,17 @@ export function Sidebar() {
           </div>
         </Link>
 
-        <Link href="/login">
-          <div className="flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
-            <LogOut className="mr-3 h-4 w-4" />
-            Sign Out
-          </div>
-        </Link>
+        <button
+          onClick={async () => {
+            const { logout } = await import("@/services/auth.service");
+            logout();
+            router.push("/authentication");
+          }}
+          className="w-full text-left flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+        >
+          <LogOut className="mr-3 h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );

@@ -5,24 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { RiskBadge } from "./RiskBadge";
-import { Patient } from "@/lib/mockData";
+import { Patient } from "@/types/patient.type";
 
-export function PatientRow({ patient }: { patient: Patient }) {
+export function PatientRow({ patient }: { patient: Partial<Patient> }) {
   return (
     <TableRow className="hover:bg-slate-50/50 transition-colors">
       <TableCell>
         <div className="flex items-center">
           <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs mr-3">
-            {patient.name
+            { (patient.full_name || `${patient.first_name || ""} ${patient.last_name || ""}`).trim()
               .split(" ")
               .map((n) => n[0])
-              .join("")}
+              .join("") }
           </div>
 
           <div>
-            <div className="font-medium text-slate-900">{patient.name}</div>
+            <div className="font-medium text-slate-900">{(patient.full_name || `${patient.first_name || ""} ${patient.last_name || ""}`).trim()}</div>
             <div className="text-xs text-slate-500">
-              {patient.age} yrs • {patient.gender}
+              {patient.age ?? "—"} yrs • {patient.gender}
             </div>
           </div>
         </div>

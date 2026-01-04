@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { ReactNode } from 'react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { usePatient } from "@/hooks/use-patients";
-import { usePatientScans } from "@/hooks/use-scans";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+
+import { getPatient } from "@/services/patient.service";
+import { getPatientRecords } from "@/services/record.service";
 
 import {
   ArrowLeft,
@@ -27,8 +28,36 @@ export default function PatientDetailsPage() {
   const params = useParams();
   const id = Number(params.id);
 
-  const { data: patient, isLoading: loadingPatient } = usePatient(id);
-  const { data: scans, isLoading: loadingScans } = usePatientScans(id);
+  const [patient, setPatient] = useState<any | null>(null);
+  const [scans, setScans] = useState<any[]>([]);
+  const [loadingPatient, setLoadingPatient] = useState(true);
+  const [loadingScans, setLoadingScans] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingPatient(true);
+      setLoadingScans(true);
+      try {
+        const p = await getPatient(id);
+        setPatient(p);
+      } catch (err) {
+        console.error("Failed to load patient", err);
+      } finally {
+        setLoadingPatient(false);
+      }
+
+      try {
+        const s = await getPatientRecords(id);
+        setScans(s || []);
+      } catch (err) {
+        console.error("Failed to load scans", err);
+      } finally {
+        setLoadingScans(false);
+      }
+    };
+
+    load();
+  }, [id]);
 
   if (loadingPatient) {
     return (
@@ -76,7 +105,7 @@ export default function PatientDetailsPage() {
             <div className="px-6 pb-6">
               <div className="relative -mt-12 mb-4">
                 <div className="h-24 w-24 rounded-full border-4 border-white bg-white shadow-md flex items-center justify-center text-2xl font-bold text-slate-800">
-                  {patient.name
+                  {(patient.full_name || `${patient.first_name || ""} ${patient.last_name || ""}`).trim()
                     .split(" ")
                     .map((n) => n[0])
                     .join("")}
@@ -84,20 +113,18 @@ export default function PatientDetailsPage() {
               </div>
 
               <h2 className="text-xl font-bold text-slate-900">
-                {patient.name}
+                {(patient.full_name || `${patient.first_name || ""} ${patient.last_name || ""}`).trim()}
               </h2>
               <p className="text-sm text-slate-500 mb-4">
-                Patient ID: #{patient.id.toString().padStart(4, "0")}
+                Patient ID: #{String(patient.id).padStart(4, "0")}
               </p>
 
               <div className="space-y-3 pt-4 border-t border-slate-100">
-                <InfoRow icon={<Mail />} value={patient.email} />
-                <InfoRow icon={<Phone />} value={patient.phone} />
+                <InfoRow icon={<Mail />} value={patient.email || undefined} />
+                <InfoRow icon={<Phone />} value={patient.phone || undefined} />
                 <InfoRow
                   icon={<Calendar />}
-                  value={`Last Visit: ${new Date(
-                    patient.lastVisit!
-                  ).toLocaleDateString()}`}
+                  value={patient.last_visit ? `Last Visit: ${new Date(patient.last_visit).toLocaleDateString()}` : undefined}
                 />
               </div>
             </div>
@@ -113,14 +140,14 @@ export default function PatientDetailsPage() {
             <CardContent>
               <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 text-sm text-amber-900 flex items-start">
                 <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
-                {patient.notes || "No clinical notes available."}
+                {scans && scans.length > 0 && scans[0].notes ? scans[0].notes : "No clinical notes available."}
               </div>
 
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <div className="text-xs font-medium text-slate-500 uppercase mb-2">
                   Risk Profile
                 </div>
-                <RiskBadge risk={patient.riskProfile} />
+                <RiskBadge risk={(patient.age ?? 0) >= 60 ? "High" : "Low"} />
               </div>
             </CardContent>
           </Card>

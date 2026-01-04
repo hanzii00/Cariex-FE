@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,43 +8,57 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Phone, MapPin, Briefcase, Lock, ShieldCheck, Camera } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { fetchProfile, updateProfile, uploadAvatar, ProfileData } from "./services/profile.service";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [profile, setProfile] = useState({
-    name: 'Dr. Sarah Mitchell',
-    email: 'sarah.mitchell@dentalclinic.com',
-    phone: '+1 (555) 234-9876',
-    location: 'San Francisco, CA',
-    role: 'Lead Dentist',
-    credentials: 'DDS, University of California',
-    bio: 'Specialized in caries prevention and early detection. 12 years of clinical experience.',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah'
-  });
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [formData, setFormData] = useState<Partial<ProfileData>>({});
+  const accessToken = "USER_ACCESS_TOKEN"; // Replace with auth token logic
 
-  const [formData, setFormData] = useState(profile);
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const data = await fetchProfile(accessToken);
+        setProfile(data);
+        setFormData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadProfile();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData({ ...formData, avatar: event.target.result as string });
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && profile) {
+      try {
+        const avatarUrl = await uploadAvatar(e.target.files[0], profile.name); // or user ID
+        setFormData({ ...formData, avatar: avatarUrl });
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
-  const handleSave = () => {
-    setProfile(formData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!profile) return;
+    try {
+      const updated = await updateProfile(accessToken, formData);
+      setProfile(updated);
+      setFormData(updated);
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  if (!profile) return <DashboardLayout title="Profile Settings">Loading...</DashboardLayout>;
 
   return (
     <DashboardLayout title="Profile Settings">

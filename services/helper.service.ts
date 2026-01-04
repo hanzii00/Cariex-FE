@@ -7,6 +7,26 @@ export async function handleResponse(response: Response) {
   const contentType = response.headers.get("content-type");
   const data = contentType && contentType.includes("application/json") ? await response.json() : null;
 
+  if (response.status === 401) {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+      }
+    } catch (e) {
+    }
+
+    let message = "Please sign in again.";
+    if (data) {
+      if (typeof data === "string") message = data;
+      else if (data.detail) message = data.detail;
+      else if (data.error) message = data.error;
+    }
+
+    const err = { message, fields: data };
+    throw err;
+  }
+
   if (!response.ok) {
     let message = "An error occurred";
 

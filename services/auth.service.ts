@@ -29,6 +29,28 @@ export async function register({ username, email, password, password2 }: Registe
   return data;
 }
 
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_URL}/auth/password-reset/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await handleResponse(res);
+  return data;
+}
+
+export async function confirmPasswordReset(token: string, password: string, password2: string) {
+  const res = await fetch(`${API_URL}/auth/password-reset/${token}/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password, password2 }),
+  });
+
+  const data = await handleResponse(res);
+  return data;
+}
+
 export function logout() {
   const refresh = localStorage.getItem("refresh");
 

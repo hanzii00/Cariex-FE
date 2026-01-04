@@ -1,3 +1,5 @@
+import { RiskLevel } from "@/app/patients/components/RiskBadge";
+
 export type Patient = {
   id: number;
   name: string;
@@ -6,7 +8,7 @@ export type Patient = {
   email?: string;
   phone?: string;
   lastVisit?: Date;
-  riskProfile?: string;
+  riskProfile?: RiskLevel;
   notes?: string;
 };
 

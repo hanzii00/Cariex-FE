@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/sonner";
 import { Eye, EyeClosed, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { ForgetPasswordDialog } from "./ForgetPasswordDialog";
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -78,12 +78,9 @@ export default function Login({ onSuccess }: LoginProps) {
       </div>
 
       <div className="flex justify-end -mt-3">
-        <Link
-          href="/forgot-password"
-          className="text-xs text-blue-600 hover:underline hover:text-blue-700 transition-all duration-200"
-        >
-          Forgot password?
-        </Link>
+        <ForgetPasswordDialog>
+          <button className="text-xs text-blue-600 hover:underline">Forgot password?</button>
+        </ForgetPasswordDialog>
       </div>
 
       <Button

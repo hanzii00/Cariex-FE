@@ -40,7 +40,17 @@ export default function PatientDetailsPage() {
 
     try {
       const s = await getPatientRecords(id);
-      setScans(s || []);
+      try {
+        const { fetchDiagnoses, mapDiagnosisToScan } = await import('@/services/scan.service');
+        const diag = await fetchDiagnoses();
+        const diagScans = (diag || []).map(mapDiagnosisToScan);
+
+        setScans([ ...(s || []), ...diagScans ]);
+      } catch (err) {
+        console.error('Failed to load diagnoses', err);
+        setScans(s || []);
+      }
+
     } catch (err) {
       console.error("Failed to load scans", err);
     } finally {

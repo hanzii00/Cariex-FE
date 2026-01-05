@@ -4,8 +4,15 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // helper functions for making API requests
 export async function handleResponse(response: Response) {
-  const contentType = response.headers.get("content-type");
-  const data = contentType && contentType.includes("application/json") ? await response.json() : null;
+  let data: any = null;
+  const text = await response.text();
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = null;
+    }
+  }
 
   if (response.status === 401) {
     try {

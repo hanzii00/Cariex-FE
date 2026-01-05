@@ -1,7 +1,18 @@
 "use client";
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { UploadCloud } from "lucide-react";
 
 interface ActivityGraphCardProps {
   data: { name: string; scans: number }[];
@@ -9,11 +20,18 @@ interface ActivityGraphCardProps {
 
 export function ActivityGraphCard({ data }: ActivityGraphCardProps) {
   return (
-    <Card className="lg:col-span-2 border-slate-100 shadow-sm">
-      <CardHeader>
+    <Card className="lg:col-span-2 border-slate-100 shadow-sm py-4 flex justify-center">
+      <CardHeader className="flex items-center justify-between">
         <CardTitle className="text-lg font-semibold text-slate-800">
           Scan Activity
         </CardTitle>
+
+        <Link href="/upload">
+          <Button variant="outline" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:bg-blue-50 hover:border-blue-600 transition-all hover:cursor-pointer">
+            <UploadCloud className="h-4 w-4 mr-1" />
+            Analyze Now
+          </Button>
+        </Link>
       </CardHeader>
 
       <CardContent className="h-[300px]">

@@ -1,4 +1,4 @@
-import { Patient, PatientCreateData } from "@/types/dashboard.type";
+import { Patient, PatientCreateData } from "@/types/patient.type";
 import { API_URL, buildQueryString, getAuthHeaders, handleResponse } from "./helper.service";
 
 export async function fetchPatients(params?: {

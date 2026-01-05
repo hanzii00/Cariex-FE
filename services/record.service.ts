@@ -1,4 +1,4 @@
-import { RecordCreateData, RecordItem } from "@/types/dashboard.type";
+import { RecordCreateData, RecordItem } from "@/types/record.type";
 import { API_URL, buildQueryString, getAuthHeaders, handleResponse } from "./helper.service";
 
 export async function fetchRecords(params?: {

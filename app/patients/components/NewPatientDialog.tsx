@@ -1,6 +1,14 @@
 "use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -22,6 +30,16 @@ export function NewPatientDialog({ children, onCreate }: Props) {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("O");
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const resetForm = () => {
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhone("");
+    setDateOfBirth("");
+    setGender("O");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,22 +64,28 @@ export function NewPatientDialog({ children, onCreate }: Props) {
         email: email?.trim() || undefined,
         phone: phone.trim(),
       });
+
       toast.success("Patient created successfully.");
       if (onCreate) onCreate();
+
+      resetForm();
+      setIsOpen(false);
     } catch (err: any) {
-      if (err?.fields && typeof err.fields === 'object') {
+      if (err?.fields && typeof err.fields === "object") {
         const messages = Object.entries(err.fields)
-          .map(([k, v]) => {
-            if (Array.isArray(v)) return `${k}: ${v.join(', ')}`;
-            return `${k}: ${String(v)}`;
-          })
-          .join(' — ');
+          .map(([k, v]) =>
+            Array.isArray(v) ? `${k}: ${v.join(", ")}` : `${k}: ${String(v)}`
+          )
+          .join(" — ");
         toast.error(messages || err?.message || "Failed to create patient.");
       } else {
         const msg = err?.message || "Failed to create patient.";
         toast.error(msg);
-        if (msg.toLowerCase().includes("token") || msg.toLowerCase().includes("please sign in")) {
-          router.push('/authentication');
+        if (
+          msg.toLowerCase().includes("token") ||
+          msg.toLowerCase().includes("please sign in")
+        ) {
+          router.push("/authentication");
         }
       }
     } finally {
@@ -70,10 +94,18 @@ export function NewPatientDialog({ children, onCreate }: Props) {
   };
 
   return (
-    <Dialog>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          resetForm();
+        }
+        setIsOpen(open);
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-106.25">
+      <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add New Patient</DialogTitle>
@@ -82,23 +114,35 @@ export function NewPatientDialog({ children, onCreate }: Props) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 my-2">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="firstName" className="text-right">
+              <Label htmlFor="firstName" className="text-left">
                 First Name
               </Label>
-              <Input id="firstName" placeholder="John" className="col-span-3" value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
+              <Input
+                id="firstName"
+                placeholder="John"
+                className="col-span-3"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="lastName" className="text-right">
+              <Label htmlFor="lastName" className="text-left">
                 Last Name
               </Label>
-              <Input id="lastName" placeholder="Doe" className="col-span-3" value={lastName} onChange={(e)=>setLastName(e.target.value)} />
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                className="col-span-3"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
+              <Label htmlFor="email" className="text-left">
                 Email
               </Label>
               <Input
@@ -106,12 +150,12 @@ export function NewPatientDialog({ children, onCreate }: Props) {
                 placeholder="john@example.com"
                 className="col-span-3"
                 value={email}
-                onChange={(e)=>setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">
+              <Label htmlFor="phone" className="text-left">
                 Phone
               </Label>
               <Input
@@ -119,13 +163,13 @@ export function NewPatientDialog({ children, onCreate }: Props) {
                 placeholder="0917-123-4567"
                 className="col-span-3"
                 value={phone}
-                onChange={(e)=>setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value)}
                 type="tel"
               />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dob" className="text-right">
+              <Label htmlFor="dob" className="text-left">
                 Date of Birth
               </Label>
               <Input
@@ -133,15 +177,20 @@ export function NewPatientDialog({ children, onCreate }: Props) {
                 type="date"
                 className="col-span-3"
                 value={dateOfBirth}
-                onChange={(e)=>setDateOfBirth(e.target.value)}
+                onChange={(e) => setDateOfBirth(e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="gender" className="text-right">
+              <Label htmlFor="gender" className="text-left">
                 Gender
               </Label>
-              <select id="gender" value={gender} onChange={(e)=>setGender(e.target.value)} className="col-span-3 border rounded px-2 py-2">
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="col-span-3 border rounded px-2 py-2 text-sm"
+              >
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
@@ -150,8 +199,12 @@ export function NewPatientDialog({ children, onCreate }: Props) {
           </div>
 
           <DialogFooter>
-            <Button type="submit" className="bg-blue-600" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Record"}
+            <Button
+              type="submit"
+              className="bg-blue-600 w-full hover:bg-blue-700 hover:cursor-pointer"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating..." : "Create Patient"}
             </Button>
           </DialogFooter>
         </form>

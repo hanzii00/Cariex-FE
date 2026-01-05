@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
-import { Input } from "../ui/input";
+import { PatientSearch } from "@/app/dashboard/components/PatientSearch";
+import { Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export function Header({ title }: { title: string }) {
@@ -13,19 +13,11 @@ export function Header({ title }: { title: string }) {
       <h1 className="text-xl font-bold text-slate-900">{title}</h1>
 
       <div className="flex items-center space-x-6">
-        {showSearch && (
-          <div className="relative w-64 hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search patients..."
-              className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-full"
-            />
-          </div>
-        )}
-        
-        <button className="relative p-2 rounded-full hover:bg-slate-200/50 transition-all hover:cursor-pointer">
+        {showSearch && <PatientSearch />}
+
+        <button className="relative p-2 rounded-full hover:bg-slate-200/50 transition-all">
           <Bell className="h-5 w-5 text-slate-900" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
+          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white" />
         </button>
       </div>
     </header>

@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, UploadCloud, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchProfile, ProfileData } from "@/services/profile.service";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function Sidebar() {
   const location = usePathname() || "/";
@@ -20,7 +22,6 @@ export function Sidebar() {
         const data = await fetchProfile();
         if (mounted) setProfile(data);
       } catch (e) {
-        // ignore errors in sidebar
       }
     }
     load();
@@ -105,17 +106,37 @@ export function Sidebar() {
           </div>
         </Link>
 
-        <button
-          onClick={async () => {
-            const { logout } = await import("@/services/auth.service");
-            logout();
-            router.push("/authentication");
-          }}
-          className="w-full text-left flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-        >
-          <LogOut className="mr-3 h-4 w-4" />
-          Sign Out
-        </button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="w-full text-left flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
+              <LogOut className="mr-3 h-4 w-4" />
+              Sign Out
+            </button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sign out</DialogTitle>
+              <p className="text-sm text-slate-500">Are you sure you want to sign out?</p>
+            </DialogHeader>
+
+            <DialogFooter>
+              <div className="flex gap-2 w-full justify-end">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+
+                <Button variant="destructive" onClick={async () => {
+                  const { logout } = await import("@/services/auth.service");
+                  await logout();
+                  router.push("/authentication");
+                }}>
+                  Sign Out
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </aside>
   );

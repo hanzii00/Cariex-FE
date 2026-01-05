@@ -3,12 +3,46 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, UploadCloud, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchProfile, ProfileData } from "@/services/profile.service";
 
 export function Sidebar() {
   const location = usePathname() || "/";
   const router = useRouter();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const data = await fetchProfile();
+        if (mounted) setProfile(data);
+      } catch (e) {
+        // ignore errors in sidebar
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, []);
+
+  const getInitials = () => {
+    const first = profile?.first_name?.trim().charAt(0) ?? "";
+    const last = profile?.last_name?.trim().charAt(0) ?? "";
+    const initials = (first + last).toUpperCase();
+    if (initials) return initials;
+    const fallback = (profile?.email || "").toString().trim().slice(0, 2).toUpperCase();
+    return fallback || "U";
+  };
+
+  const displayName = () => {
+    if (!profile) return "Dr. Reynolds";
+    const first = profile.first_name ?? "";
+    const last = profile.last_name ?? "";
+    const full = `${first} ${last}`.trim();
+    return full ? `Dr. ${full}` : (profile.email ?? "");
+  };
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -60,13 +94,13 @@ export function Sidebar() {
         <Link href="/profile">
           <div className="flex items-center p-3 rounded-lg bg-slate-50 border border-slate-100 mb-3 cursor-pointer hover:bg-blue-50/50 hover:border-blue-100 transition-all group">
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              DR
+              {getInitials()}
             </div>
             <div className="ml-3">
               <p className="text-sm font-semibold text-slate-900">
-                Dr. Reynolds
+                {displayName()}
               </p>
-              <p className="text-xs text-slate-500">Lead Dentist</p>
+              <p className="text-xs text-slate-500">Dentist</p>
             </div>
           </div>
         </Link>

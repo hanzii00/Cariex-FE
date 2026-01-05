@@ -1,23 +1,25 @@
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { getAuthHeaders } from "../services/helper.service";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface ProfileData {
-  name: string;
-  email: string;
-  phone: string;
-  location: string;
-  role: string;
-  credentials: string;
-  bio: string;
-  avatar: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  office_location?: string;
+  role?: string;
+  education?: string;
+  bio?: string;
+  avatar_url?: string;
+  member_since?: number;
+  is_active?: boolean;
 }
 
-export async function fetchProfile(accessToken: string): Promise<ProfileData> {
+export async function fetchProfile(): Promise<ProfileData> {
   const res = await fetch(`${API_URL}/accounts/profile/`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) throw new Error("Failed to fetch profile");
@@ -25,15 +27,11 @@ export async function fetchProfile(accessToken: string): Promise<ProfileData> {
   return res.json();
 }
 
-export async function updateProfile(
-  accessToken: string,
-  data: Partial<ProfileData>
-): Promise<ProfileData> {
+export async function updateProfile(data: Partial<ProfileData>): Promise<ProfileData> {
   const res = await fetch(`${API_URL}/accounts/profile/`, {
     method: "PATCH",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
   });

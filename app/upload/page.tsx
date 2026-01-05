@@ -28,7 +28,12 @@ export default function UploadScan() {
   // Fetch patients + recent scans on mount
   useEffect(() => {
     fetchPatients().then(setPatients).catch(console.error);
-    fetchRecentScans().then(setRecentScans).catch(console.error);
+    fetchRecentScans()
+      .then(data => {
+        const scans = Array.isArray(data) ? data : (data?.results ?? []);
+        setRecentScans(scans);
+      })
+      .catch(console.error);
   }, []);
 
   const handleUpload = async () => {
@@ -42,7 +47,8 @@ export default function UploadScan() {
 
       // Optionally poll for status
       const interval = setInterval(async () => {
-        const scans = await fetchRecentScans();
+        const scansResp = await fetchRecentScans();
+        const scans = Array.isArray(scansResp) ? scansResp : (scansResp?.results ?? []);
         setRecentScans(scans);
         const updated = scans.find(s => s.id === scan.id);
         if (updated?.status === 'completed') {
@@ -136,9 +142,11 @@ export default function UploadScan() {
             {recentScans.map(scan => (
               <div key={scan.id} className="flex items-center justify-between border rounded-lg p-4">
                 <div>
-                  <p className="font-semibold">{scan.patientName}</p>
-                  <p className="text-sm text-slate-500">Patient ID #{scan.patientId.toString().padStart(4, '0')}</p>
-                  <p className="text-xs text-slate-400">Uploaded: {scan.uploadedAt}</p>
+                  <p className="font-semibold">{scan.patientName ?? 'Unknown Patient'}</p>
+                  <p className="text-sm text-slate-500">
+                    Patient ID #{scan.patientId != null ? scan.patientId.toString().padStart(4, '0') : '----'}
+                  </p>
+                  <p className="text-xs text-slate-400">Uploaded: {scan.uploadedAt ?? '—'}</p>
                 </div>
 
                 <div className="flex items-center gap-4">

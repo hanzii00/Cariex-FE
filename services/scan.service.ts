@@ -1,4 +1,5 @@
-import { API_URL, getAuthHeaders, handleResponse, buildQueryString } from './helper.service';
+import { DiagnosisItem, ScanItem } from "@/types/scan.type";
+import { API_URL, getAuthHeaders, handleResponse } from "./helper.service";
 
 export interface Patient {
   id: number;
@@ -7,11 +8,11 @@ export interface Patient {
 
 export interface DiagnosisResult {
   id: number;
-  patientName: string;
-  patientId: number;
-  uploadedAt: string;
-  status: 'pending' | 'processing' | 'completed';
-  imageUrl?: string;
+  patientName: string | null;
+  patientId: number | null;
+  uploadedAt: string | null;
+  status: "pending" | "processing" | "completed" | string;
+  imageUrl?: string | null;
 }
 
 // Fetch all patients
@@ -25,51 +26,60 @@ export async function fetchPatients(): Promise<Patient[]> {
 // Upload a dental image for a patient
 export async function uploadScan(file: File, patientId: number): Promise<DiagnosisResult> {
   const formData = new FormData();
-  formData.append('image', file);
-  formData.append('patient_id', patientId.toString());
+  formData.append("image", file);
+  formData.append("patient_id", patientId.toString());
 
   const res = await fetch(`${API_URL}/ai/upload/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('access')}`,
+      Authorization: `Bearer ${localStorage.getItem("access")}`,
     },
     body: formData,
   });
 
-  return handleResponse(res);
+  const data: any = await handleResponse(res);
+  const d = data?.data ?? data;
+
+  return {
+    id: d.id,
+    patientName: d.patient_name ?? d.patientName ?? null,
+    patientId: d.patient_id ?? d.patientId ?? null,
+    uploadedAt: d.uploaded_at ?? d.uploadedAt ?? null,
+    status: d.status ?? "pending",
+    imageUrl: d.image_url ?? d.imageUrl ?? null,
+  };
 }
 
-// Fetch recent scans / diagnosis results
+// Fetch recent scans / diagnosis results for the upload page
 export async function fetchRecentScans(): Promise<DiagnosisResult[]> {
   const res = await fetch(`${API_URL}/ai/diagnosis/all/`, {
     headers: getAuthHeaders(),
   });
-  const data = await handleResponse(res);
+  const data: any = await handleResponse(res);
 
-  const raw = Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
+  const raw = Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
 
   return raw.map((d: any) => ({
     id: d.id,
     patientName: d.patient_name ?? d.patientName ?? null,
-    patientId: d.patient_id ?? d.patientId ?? d.patient_id ?? null,
+    patientId: d.patient_id ?? d.patientId ?? null,
     uploadedAt: d.uploaded_at ?? d.uploadedAt ?? null,
-    status: d.status ?? 'pending',
+    status: d.status ?? "pending",
     imageUrl: d.image_url ?? d.imageUrl ?? null,
   }));
 }
 
-
-// scan.service.ts
+// Get a single diagnosis by id (used on analysis page)
 export async function getDiagnosis(diagnosisId: number) {
   const res = await fetch(`${API_URL}/ai/diagnosis/${diagnosisId}/`, {
     headers: getAuthHeaders(),
   });
-  const data = await handleResponse(res);
+  const data: any = await handleResponse(res);
   // Backend returns { success: true, data: { ... } } for single diagnosis
   return data?.data ?? data;
-import { DiagnosisItem, ScanItem } from "@/types/scan.type";
-import { API_URL, getAuthHeaders, handleResponse } from "./helper.service";
+}
 
+// Generic diagnoses list used in other parts of the app (e.g. dashboard)
 export async function fetchDiagnoses(): Promise<DiagnosisItem[]> {
   const res = await fetch(`${API_URL}/ai/diagnosis/all/`, {
     method: "GET",
@@ -78,8 +88,8 @@ export async function fetchDiagnoses(): Promise<DiagnosisItem[]> {
 
   const data: any = await handleResponse(res);
 
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.results)) return data.results;
+  if (Array.isArray(data)) return data as DiagnosisItem[];
+  if (data && Array.isArray(data.results)) return data.results as DiagnosisItem[];
 
   return [];
 }
@@ -98,7 +108,7 @@ export function mapDiagnosisToScan(d: DiagnosisItem | any): ScanItem {
     id: d.id,
     imageUrl,
     type: "Diagnosis",
-    date: d.uploaded_at || d.uploaded_at,
+    date: d.uploaded_at,
     status: d.status || (d.has_caries ? "analyzed" : "pending"),
     __diagnosis: d,
   } as ScanItem;

@@ -64,5 +64,7 @@ export async function getDiagnosis(diagnosisId: number) {
   const res = await fetch(`${API_URL}/ai/diagnosis/${diagnosisId}/`, {
     headers: getAuthHeaders(),
   });
-  return handleResponse(res);
+  const data = await handleResponse(res);
+  // Backend returns { success: true, data: { ... } } for single diagnosis
+  return data?.data ?? data;
 }

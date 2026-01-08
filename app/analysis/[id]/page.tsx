@@ -6,15 +6,15 @@ import { useRouter, useParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Loader2, 
-  CheckCircle2, 
-  Clock, 
-  BarChart3, 
-  Brain, 
-  Info, 
-  Target, 
-  AlertCircle, 
+import {
+  Loader2,
+  CheckCircle2,
+  Clock,
+  BarChart3,
+  Brain,
+  Info,
+  Target,
+  AlertCircle,
   ArrowLeft,
   ExternalLink,
   Download,
@@ -144,7 +144,7 @@ export default function AnalysisPage() {
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Diagnosis Report</h1>
             <p className="text-gray-500 text-sm mt-1">ID: #{diagnosis.id} &bull; Uploaded on {diagnosis.uploaded_at}</p>
           </div>
-          
+
           <div className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium ${diagnosis.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
             {diagnosis.status === 'completed' ? (
               <>
@@ -330,9 +330,9 @@ export default function AnalysisPage() {
                   )}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-6">
-                
+
                 {/* Empty State / Initial Load */}
                 {!xaiData && !quickOverlay && !xaiLoading && (
                   <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
@@ -375,7 +375,7 @@ export default function AnalysisPage() {
                          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Full Analysis
                        </Button>
                     </div>
-                    
+
                     <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-100">
                       {quickOverlay.description}
                     </p>
@@ -423,7 +423,7 @@ export default function AnalysisPage() {
                         <Info className="w-4 h-4 text-blue-600" />
                         Clinical Interpretation
                       </h3>
-                      
+
                       <div className="grid gap-6 md:grid-cols-2 text-sm">
                         <div>
                           <p className="font-medium text-gray-900 mb-1">Status</p>
@@ -444,14 +444,14 @@ export default function AnalysisPage() {
                       </div>
 
                       <div className="pt-4 mt-4 border-t border-gray-200 flex flex-wrap gap-6 text-xs text-gray-600">
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                           <span className="w-3 h-3 rounded-full bg-red-500" />
                           <span>Suspected Caries</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="w-3 h-3 rounded-full bg-green-500" />
                           <span>Healthy Tissue</span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -459,7 +459,7 @@ export default function AnalysisPage() {
                       <Button variant="outline" onClick={loadQuickOverlay} disabled={quickLoading} className="border-gray-300 text-gray-700 hover:bg-gray-50">
                         {quickLoading ? 'Loading...' : 'View Quick Overlay'}
                       </Button>
-                      
+
                       {xaiData.explanation_url && (
                         <>
                           <a
@@ -509,15 +509,11 @@ export default function AnalysisPage() {
                     <span className="text-gray-500">Processing Status</span>
                     <span className="text-gray-900 capitalize">{diagnosis.status}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
+                <div className="flex justify-between py-2">
                     <span className="text-gray-500">Caries Detected</span>
                     <span className={`font-medium ${diagnosis.has_caries ? 'text-red-600' : 'text-green-600'}`}>
                         {diagnosis.has_caries ? 'Yes' : 'No'}
                     </span>
-                </div>
-                <div className="flex justify-between py-2">
-                    <span className="text-gray-500">Total Lesions</span>
-                    <span className="text-gray-900">{diagnosis.num_lesions ?? (diagnosis.lesion_boxes ?? []).length ?? 0}</span>
                 </div>
               </CardContent>
             </Card>
@@ -544,16 +540,16 @@ export default function AnalysisPage() {
                 </Card>
 
                 <div className="flex flex-wrap gap-4">
-                <Button 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" 
+                <Button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => router.push('/upload')}
                 >
                     <Upload className="w-4 h-4 mr-2" />
                     Upload New Scan
                 </Button>
-                <Button 
-                    variant="outline" 
-                    className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50" 
+                <Button
+                    variant="outline"
+                    className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
                     onClick={() => window.print()}
                 >
                     <Printer className="w-4 h-4 mr-2" />

@@ -6,7 +6,7 @@ import { Users, AlertCircle, CheckCircle, Activity } from "lucide-react";
 import { StatsCard } from "./components/StatCard";
 import { ActivityGraphCard } from "./components/ActivityGraphCard";
 import { PatientListCard } from "./components/PatientListCard";
-import { getDashboardStats } from "@/services/dashboard.service";
+import { getDashboardStats, getScansActivity } from "@/services/dashboard.service";
 import { fetchPatients } from "@/services/patient.service";
 import { fetchRecords } from "@/services/record.service";
 import { calculateAge } from "@/lib/utils";
@@ -30,11 +30,17 @@ export default function Dashboard() {
     const load = async () => {
       setIsLoading(true);
       try {
-        const [s, allPatients, records] = await Promise.all([
+        const [s, allPatients, records, scansActivity] = await Promise.all([
           getDashboardStats(),
           fetchPatients(),
           fetchRecords(),
+          getScansActivity(7), // Request 7 days of data
         ]);
+
+        console.log("=== SCANS ACTIVITY DEBUG ===");
+        console.log("Raw scansActivity response:", scansActivity);
+        console.log("Success:", scansActivity?.success);
+        console.log("Data:", scansActivity?.data);
 
         setStats(s);
 
@@ -56,23 +62,51 @@ export default function Dashboard() {
         }).length;
         setHighRiskCount(highRisk);
 
+        // Process scan activity from backend
         const todayStr = new Date().toISOString().slice(0, 10);
-        const scansTodayCount = (records || []).filter((r: any) => (r.visit_date || "").startsWith(todayStr)).length;
+        let scansTodayCount = 0;
+
+        if (scansActivity && scansActivity.success && Array.isArray(scansActivity.data)) {
+          console.log("Processing scan activity data...");
+          
+          // Transform all data for chart (should already be 7 days)
+          const transformedData = scansActivity.data.map((item: any) => {
+            const date = new Date(item.date);
+            const name = date.toLocaleDateString(undefined, { weekday: "short" });
+            console.log(`Date: ${item.date}, Name: ${name}, Count: ${item.count}`);
+            return {
+              name,
+              scans: item.count || 0
+            };
+          });
+          
+          console.log("Transformed data for chart:", transformedData);
+          setActivityData(transformedData);
+
+          // Get today's scan count
+          const todayData = scansActivity.data.find((item: any) => item.date === todayStr);
+          scansTodayCount = todayData ? todayData.count : 0;
+          console.log(`Today (${todayStr}) scan count:`, scansTodayCount);
+        } else {
+          console.log("Falling back to records-based calculation");
+          // Fallback: calculate from records
+          const days: { name: string; scans: number }[] = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dayKey = d.toISOString().slice(0, 10);
+            const name = d.toLocaleDateString(undefined, { weekday: "short" });
+            const scans = (records || []).filter((r: any) => (r.visit_date || "").startsWith(dayKey)).length;
+            days.push({ name, scans });
+          }
+          setActivityData(days);
+          scansTodayCount = (records || []).filter((r: any) => (r.visit_date || "").startsWith(todayStr)).length;
+        }
+
         setScansToday(scansTodayCount);
 
         const pending = (records || []).filter((r: any) => !r.diagnosis).length;
         setPendingReviews(pending);
-
-        const days: { name: string; scans: number }[] = [];
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const dayKey = d.toISOString().slice(0, 10);
-          const name = d.toLocaleDateString(undefined, { weekday: "short" });
-          const scans = (records || []).filter((r: any) => (r.visit_date || "").startsWith(dayKey)).length;
-          days.push({ name, scans });
-        }
-        setActivityData(days);
 
         const toISODate = (d: Date) => d.toISOString().slice(0, 10);
         const today = new Date();
@@ -80,15 +114,6 @@ export default function Dashboard() {
         lastMonthStart.setDate(today.getDate() - 30);
         const prevMonthStart = new Date();
         prevMonthStart.setDate(today.getDate() - 60);
-
-        const countInRange = (items: any[], dateKey: string, start: Date, end: Date) => {
-          const s = toISODate(start);
-          const e = toISODate(end);
-          return (items || []).filter((it: any) => {
-            const d = (it[dateKey] || it.created_at || it.visit_date || "").slice(0, 10);
-            return d >= s && d <= e;
-          }).length;
-        };
 
         const lastMonthEnd = today;
         const prevMonthEnd = new Date();
@@ -117,9 +142,19 @@ export default function Dashboard() {
         }).length;
         const highRiskTrendPercent = calcPercent(highRisk, highRiskPrev);
 
+        // Calculate yesterday's scans from backend data
         const yesterday = new Date();
         yesterday.setDate(today.getDate() - 1);
-        const scansYesterday = (records || []).filter((r: any) => (r.visit_date || "").startsWith(toISODate(yesterday))).length;
+        const yesterdayStr = toISODate(yesterday);
+        
+        let scansYesterday = 0;
+        if (scansActivity && scansActivity.success && Array.isArray(scansActivity.data)) {
+          const yesterdayData = scansActivity.data.find((item: any) => item.date === yesterdayStr);
+          scansYesterday = yesterdayData ? yesterdayData.count : 0;
+        } else {
+          scansYesterday = (records || []).filter((r: any) => (r.visit_date || "").startsWith(yesterdayStr)).length;
+        }
+        
         const scansTodayTrendPercent = calcPercent(scansTodayCount, scansYesterday);
 
         const pendingPrev = (records || []).filter((r: any) => {
@@ -129,9 +164,6 @@ export default function Dashboard() {
         const pendingReviewsTrendPercent = calcPercent(pending, pendingPrev);
 
         setHighRiskCount(highRisk);
-        setScansToday(scansTodayCount);
-        setPendingReviews(pending);
-        setActivityData(days);
 
         (window as any).__dashboard_trends = {
           totalPatientsTrendPercent,

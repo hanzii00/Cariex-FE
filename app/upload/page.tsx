@@ -30,8 +30,7 @@ export default function UploadScan() {
     fetchPatients().then(setPatients).catch(console.error);
     fetchRecentScans()
       .then(data => {
-        const scans = Array.isArray(data) ? data : (data?.results ?? []);
-        setRecentScans(scans);
+        setRecentScans(data);
       })
       .catch(console.error);
   }, []);
@@ -48,9 +47,8 @@ export default function UploadScan() {
       // Optionally poll for status
       const interval = setInterval(async () => {
         const scansResp = await fetchRecentScans();
-        const scans = Array.isArray(scansResp) ? scansResp : (scansResp?.results ?? []);
-        setRecentScans(scans);
-        const updated = scans.find(s => s.id === scan.id);
+        setRecentScans(scansResp);
+        const updated = scansResp.find(s => s.id === scan.id);
         if (updated?.status === 'completed') {
           clearInterval(interval);
           setAnalyzing(false);

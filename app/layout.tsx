@@ -20,6 +20,12 @@ export const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Cariex",
   description: "Explainable AI (XAI) for Early Caries Severity Grading",
+  applicationName: "Cariex",
+  openGraph: {
+    siteName: "Cariex",
+    title: "Cariex",
+    description: "Explainable AI (XAI) for Early Caries Severity Grading",
+  },
 };
 
 export default function RootLayout({

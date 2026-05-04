@@ -11,6 +11,8 @@ interface RegisterProps {
 }
 
 export default function Register({ onSuccess }: RegisterProps) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +23,16 @@ export default function Register({ onSuccess }: RegisterProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!firstName.trim()) {
+      toast.error("Please enter your first name");
+      return;
+    }
+
+    if (!lastName.trim()) {
+      toast.error("Please enter your last name");
+      return;
+    }
 
     if (!username.trim()) {
       toast.error("Please enter a username");
@@ -45,7 +57,14 @@ export default function Register({ onSuccess }: RegisterProps) {
     setIsLoading(true);
     try {
       const { register } = await import("@/services/auth.service");
-      await register({ username, email, password, password2: confirmPassword });
+      await register({
+        first_name: firstName,
+        last_name: lastName,
+        username,
+        email,
+        password,
+        password2: confirmPassword,
+      });
       toast.success("Registration successful! Please check your email to verify your account.");
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -64,10 +83,36 @@ export default function Register({ onSuccess }: RegisterProps) {
     } finally {
       setIsLoading(false);
     }
-  }; 
+  };
 
   return (
     <form onSubmit={handleRegister} className="space-y-5">
+      {/* First & Last Name row */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            type="text"
+            placeholder="First name"
+            className="pl-12 h-11 bg-slate-50 border-slate-200"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Last name"
+            className="pl-4 h-11 bg-slate-50 border-slate-200"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      {/* Username */}
       <div className="relative">
         <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
@@ -80,6 +125,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         />
       </div>
 
+      {/* Email */}
       <div className="relative">
         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
@@ -92,6 +138,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         />
       </div>
 
+      {/* Password */}
       <div className="relative">
         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
@@ -115,6 +162,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         )}
       </div>
 
+      {/* Confirm Password */}
       <div className="relative">
         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input

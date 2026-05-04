@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
-    // Allow Supabase storage hostname used for public images
-    domains: ['sdwanylcysmixxlawfqe.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "sdwanylcysmixxlawfqe.supabase.co",
+      },
+    ],
   },
 };
 

@@ -67,33 +67,49 @@ export default function AnalysisPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const loadXAIExplanation = async () => {
-    if (!API_URL) {
-      setXaiError('API URL is not configured');
-      return;
-    }
+ const loadXAIExplanation = async () => {
+  if (!API_URL) { setXaiError('API URL is not configured'); return; }
+  try {
+    setXaiError(null);
+    setQuickOverlay(null);
+    setXaiLoading(true);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    const res = await fetch(`${API_URL}/ai/explain/${id}/`, {
+      signal: controller.signal,
+      headers: {
+        Authorization: typeof window !== 'undefined' && localStorage.getItem('access')
+          ? `Bearer ${localStorage.getItem('access')}`
+          : '',
+      },
+    });
+    clearTimeout(timeout);
+
+    // Guard: if server returned non-JSON (500 HTML page etc.), surface it
+    const text = await res.text();
+    let data: any;
     try {
-      setXaiError(null);
-      setQuickOverlay(null);
-      setXaiLoading(true);
-      const res = await fetch(`${API_URL}/ai/explain/${id}/`, {
-        headers: {
-          Authorization: typeof window !== 'undefined' && localStorage.getItem('access')
-            ? `Bearer ${localStorage.getItem('access')}`
-            : '',
-        },
-      });
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate explanation');
-      }
-      setXaiData(data);
-    } catch (e: any) {
-      setXaiError(e?.message || 'Failed to generate explanation');
-    } finally {
-      setXaiLoading(false);
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`Server returned non-JSON (status ${res.status}). Check Django logs.`);
     }
-  };
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `Request failed with status ${res.status}`);
+    }
+    setXaiData(data);
+  } catch (e: any) {
+    if (e.name === 'AbortError') {
+      setXaiError('Request timed out after 60 seconds. The Grad-CAM is taking too long — check Django logs.');
+    } else {
+      setXaiError(e?.message || 'Failed to generate explanation');
+    }
+  } finally {
+    setXaiLoading(false); 
+  }
+};
 
   const loadQuickOverlay = async () => {
     if (!API_URL) {
@@ -545,7 +561,7 @@ export default function AnalysisPage() {
                     onClick={() => router.push('/upload')}
                 >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload New Scan
+                    Upload New Scan 
                 </Button>
                 <Button
                     variant="outline"

@@ -1,4 +1,4 @@
-@import "C:/Users/bacus/Documents/Cariex-FE/node_modules/tailwindcss/index.css";
+@import "tailwindcss";
 @import "C:/Users/bacus/Documents/Cariex-FE/node_modules/tw-animate-css/dist/tw-animate.css";
 
 @custom-variant dark (&:is(.dark *));

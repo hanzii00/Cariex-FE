@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -31,6 +31,7 @@ export default function AnalysisPage() {
 
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'results' | 'xai' | 'details'>('results');
 
   // XAI state
@@ -43,31 +44,84 @@ export default function AnalysisPage() {
   const [scale, setScale] = useState({ x: 1, y: 1 });
   const [highlighted, setHighlighted] = useState<number | null>(null);
 
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const resolveMediaSrc = (src?: string | null) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (!apiBaseUrl) return src;
+    return `${apiBaseUrl}${src.startsWith('/') ? '' : '/'}${src}`;
+  };
+
+  const diagnosisImageSrc = resolveMediaSrc(
+    diagnosis?.image_url ?? diagnosis?.imageUrl ?? diagnosis?.image ?? diagnosis?.preview_url
+  );
+
+  const lesionBoxes = diagnosis?.lesion_boxes ?? diagnosis?.bounding_boxes ?? diagnosis?.lesionBoxes ?? diagnosis?.boundingBoxes ?? [];
+  const confidenceScore = diagnosis?.confidence_score ?? diagnosis?.confidenceScore ?? 0;
+  const uploadedAt = diagnosis?.uploaded_at ?? diagnosis?.uploadedAt ?? '';
+  const hasCaries = Boolean(diagnosis?.has_caries ?? diagnosis?.hasCaries ?? lesionBoxes.length > 0);
+  const severity = diagnosis?.severity ?? diagnosis?.severity_classification ?? diagnosis?.severityClassification ?? null;
+  const severityLabel = String(severity ?? '').trim().toLowerCase();
+  const hasPositiveSeverity = severityLabel && !['normal', 'healthy', 'n/a', 'na', 'none'].includes(severityLabel);
+  const cariesDetected = Boolean(hasCaries || hasPositiveSeverity);
+
   // Poll every 2 seconds if analysis not completed
   useEffect(() => {
-    let interval: any;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+
     const fetchData = async () => {
+      const diagnosisId = Array.isArray(id) ? id[0] : id;
+
+      if (!diagnosisId) {
+        return;
+      }
+
+      const parsedId = Number(diagnosisId);
+
+      if (Number.isNaN(parsedId)) {
+        setError('Invalid analysis ID.');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const data = await getDiagnosis(parseInt(id as string));
+        const data = await getDiagnosis(parsedId);
+
+        if (cancelled) return;
+
+        if (!data) {
+          throw new Error('No diagnosis data was returned.');
+        }
+
         setDiagnosis(data);
+        setError(null);
         setLoading(false);
 
         if (data.status !== 'completed') {
-          interval = setInterval(fetchData, 2000);
+          timeoutId = setTimeout(fetchData, 2000);
         }
       } catch (err) {
         console.error(err);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load analysis data.');
+          setDiagnosis(null);
+        }
         setLoading(false);
       }
     };
 
     fetchData();
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [id]);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
- const loadXAIExplanation = async () => {
+ const loadXAIExplanation = useCallback(async () => {
   if (!API_URL) { setXaiError('API URL is not configured'); return; }
   try {
     setXaiError(null);
@@ -75,7 +129,7 @@ export default function AnalysisPage() {
     setXaiLoading(true);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout
 
     const res = await fetch(`${API_URL}/ai/explain/${id}/`, {
       signal: controller.signal,
@@ -102,14 +156,22 @@ export default function AnalysisPage() {
     setXaiData(data);
   } catch (e: any) {
     if (e.name === 'AbortError') {
-      setXaiError('Request timed out after 60 seconds. The Grad-CAM is taking too long — check Django logs.');
+      setXaiError('Request timed out after 120 seconds. The Grad-CAM is taking too long — check Django logs.');
     } else {
       setXaiError(e?.message || 'Failed to generate explanation');
     }
   } finally {
     setXaiLoading(false); 
   }
-};
+}, [API_URL, id]);
+
+  useEffect(() => {
+    if (loading || error || !diagnosis || xaiData || xaiLoading) {
+      return;
+    }
+
+    void loadXAIExplanation();
+  }, [diagnosis, loading, error, xaiData, xaiLoading, loadXAIExplanation]);
 
   const loadQuickOverlay = async () => {
     if (!API_URL) {
@@ -138,13 +200,33 @@ export default function AnalysisPage() {
     }
   };
 
-  if (loading || !diagnosis) {
+  if (loading && !error) {
     return (
       <DashboardLayout title="Analysis">
         <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
           <p className="text-gray-900 font-semibold text-lg">Retrieving analysis data...</p>
           <p className="text-gray-500 text-sm">Please wait while we fetch the results.</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !diagnosis) {
+    return (
+      <DashboardLayout title="Analysis">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white px-6 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-gray-900 font-semibold text-lg">Unable to load analysis data</p>
+          <p className="text-gray-500 text-sm max-w-md mt-2">
+            {error || 'The analysis result could not be retrieved for this scan.'}
+          </p>
+          <Button
+            className="mt-6"
+            onClick={() => router.push('/upload')}
+          >
+            Go to Upload
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -158,7 +240,7 @@ export default function AnalysisPage() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-100 pb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Diagnosis Report</h1>
-            <p className="text-gray-500 text-sm mt-1">ID: #{diagnosis.id} &bull; Uploaded on {diagnosis.uploaded_at}</p>
+            <p className="text-gray-500 text-sm mt-1">ID: #{diagnosis.id} &bull; Uploaded on {uploadedAt}</p>
           </div>
 
           <div className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium ${diagnosis.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
@@ -172,6 +254,10 @@ export default function AnalysisPage() {
               </>
             )}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Cariex AI is intended for research and decision support only. It does not replace professional dental diagnosis or clinical judgment, and patients should seek evaluation from a licensed dental professional.
         </div>
 
         {/* Navigation Tabs */}
@@ -215,12 +301,14 @@ export default function AnalysisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div ref={imageWrapperRef} className="relative w-full bg-gray-50 min-h-[400px] flex items-center justify-center">
-                    <Image
-                      src={diagnosis.image_url}
+                  <div ref={imageWrapperRef} className="relative w-full bg-gray-50 min-h-[400px] flex items-center justify-center overflow-hidden">
+                    {diagnosisImageSrc ? (
+                      <Image
+                      src={diagnosisImageSrc}
                       alt="Uploaded X-ray"
                       fill
                       style={{ objectFit: 'contain' }}
+                      unoptimized={diagnosisImageSrc.startsWith('http')}
                       onLoadingComplete={(info: any) => {
                         const naturalW = info?.naturalWidth ?? info?.width ?? 1;
                         const naturalH = info?.naturalHeight ?? info?.height ?? 1;
@@ -229,8 +317,15 @@ export default function AnalysisPage() {
                         setScale({ x: dispW / naturalW, y: dispH / naturalH });
                       }}
                     />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center px-6 py-16 text-gray-500">
+                        <Activity className="w-10 h-10 text-gray-300 mb-3" />
+                        <p className="font-medium text-gray-700">No scan image is available for this diagnosis.</p>
+                        <p className="text-sm text-gray-500 mt-1">Check the backend response for an image URL.</p>
+                      </div>
+                    )}
 
-                    {(diagnosis.lesion_boxes ?? diagnosis.bounding_boxes ?? []).map((b: any) => {
+                      {lesionBoxes.map((b: any) => {
                       const left = (b.x ?? 0) * scale.x;
                       const top = (b.y ?? 0) * scale.y;
                       const width = (b.width ?? 0) * scale.x;
@@ -263,62 +358,28 @@ export default function AnalysisPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-gray-900">Detection Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
-                        <span className="block text-2xl font-bold text-gray-900">{diagnosis.num_lesions ?? (diagnosis.lesion_boxes ?? []).length ?? 0}</span>
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Lesions</span>
+                <CardContent className="space-y-4">
+                  <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Severity Classification</p>
+                        <p className="mt-2 text-xl font-bold text-gray-900">{severity ?? 'N/A'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Confidence</p>
+                        <p className="mt-2 text-2xl font-bold text-blue-600">{Number(confidenceScore ?? 0).toFixed(1)}%</p>
+                      </div>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
-                        <span className="block text-2xl font-bold text-gray-900">{(diagnosis.affected_percentage ?? 0).toFixed(1)}%</span>
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Affected Area</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                       Detected Areas
-                    </h3>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                      {(diagnosis.lesion_boxes ?? []).map((l: any, idx: number) => (
-                        <div
-                          key={l.id ?? idx}
-                          onMouseEnter={() => setHighlighted(l.id ?? null)}
-                          onMouseLeave={() => setHighlighted(null)}
-                          className={`group p-3 rounded-lg border transition-all cursor-pointer ${highlighted === (l.id ?? null) ? 'border-blue-200 bg-blue-50/50' : 'border-gray-100 hover:border-blue-200 hover:bg-gray-50'}`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-700">Lesion #{idx + 1}</div>
-                              <div className="text-xs text-gray-500 mt-0.5">
-                                Coord: ({l.x ?? 0}, {l.y ?? 0})
-                              </div>
-                            </div>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                              {((l.confidence ?? 0)).toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      {((diagnosis.lesion_boxes ?? []).length ?? 0) === 0 && (
-                        <div className="text-sm text-gray-400 italic text-center py-4">No lesions detected in this scan.</div>
-                      )}
+                    <div className="mt-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                      <span className="text-gray-500">Caries Detected</span>
+                      <span className={`font-semibold ${cariesDetected ? 'text-red-600' : 'text-green-600'}`}>
+                        {cariesDetected ? 'Yes' : 'No'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {diagnosis.severity && (
-                <Card className="border-gray-200 shadow-sm bg-gray-50/50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Severity Classification</span>
-                      <span className="text-sm font-medium text-gray-900">{(diagnosis.confidence_score ?? 0).toFixed(1)}% conf.</span>
-                    </div>
-                    <div className="text-xl font-bold text-gray-900">{diagnosis.severity}</div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
         )}
@@ -426,11 +487,11 @@ export default function AnalysisPage() {
                       </div>
                       <div className="rounded-lg bg-white border border-gray-200 p-5 shadow-sm">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Confidence</p>
-                        <p className="text-2xl font-bold text-blue-600">{(xaiData.confidence ?? 0).toFixed(1)}%</p>
+                        <p className="text-2xl font-bold text-blue-600">{Number(xaiData.confidence ?? 0).toFixed(1)}%</p>
                       </div>
                       <div className="rounded-lg bg-white border border-gray-200 p-5 shadow-sm">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Affected Area</p>
-                        <p className="text-2xl font-bold text-gray-900">{(xaiData.affected_percentage ?? 0).toFixed(2)}%</p>
+                        <p className="text-2xl font-bold text-gray-900">{Number(xaiData.affected_percentage ?? 0).toFixed(2)}%</p>
                       </div>
                     </div>
 
@@ -442,20 +503,20 @@ export default function AnalysisPage() {
 
                       <div className="grid gap-6 md:grid-cols-2 text-sm">
                         <div>
-                          <p className="font-medium text-gray-900 mb-1">Status</p>
-                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.status}</p>
+                          <p className="font-medium text-gray-900 mb-1">AI Verdict</p>
+                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.status ?? 'N/A'}</p>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 mb-1">Recommendation</p>
-                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.recommendation}</p>
+                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.recommendation ?? 'N/A'}</p>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 mb-1">Localization (Red Areas)</p>
-                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.red_areas}</p>
+                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.red_areas ?? 'N/A'}</p>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 mb-1">Model Focus (Grad-CAM)</p>
-                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.gradcam}</p>
+                          <p className="text-gray-600 leading-relaxed">{xaiData.interpretation?.gradcam ?? 'N/A'}</p>
                         </div>
                       </div>
 
@@ -527,8 +588,8 @@ export default function AnalysisPage() {
                 </div>
                 <div className="flex justify-between py-2">
                     <span className="text-gray-500">Caries Detected</span>
-                    <span className={`font-medium ${diagnosis.has_caries ? 'text-red-600' : 'text-green-600'}`}>
-                        {diagnosis.has_caries ? 'Yes' : 'No'}
+                  <span className={`font-medium ${cariesDetected ? 'text-red-600' : 'text-green-600'}`}>
+                    {cariesDetected ? 'Yes' : 'No'}
                     </span>
                 </div>
               </CardContent>

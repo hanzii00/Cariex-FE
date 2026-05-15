@@ -38,7 +38,7 @@ export function Sidebar() {
   };
 
   const displayName = () => {
-    if (!profile) return "Dr. Reynolds";
+    if (!profile) return "-";
     const first = profile.first_name ?? "";
     const last = profile.last_name ?? "";
     const full = `${first} ${last}`.trim();

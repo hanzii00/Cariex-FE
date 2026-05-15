@@ -26,7 +26,6 @@ type PatientRecord = Patient & {
 
 const getPatientDisplayName = (patient: PatientRecord) => {
   const fullName = patient.full_name || `${patient.first_name || ''} ${patient.last_name || ''}`;
-
   return fullName.trim() || `Patient ${patient.id}`;
 };
 
@@ -91,6 +90,13 @@ export default function UploadScan() {
     setFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleNewScan = () => {
+    clearSelection();
+    setCompletedScanId(null);
+    // Note: We keep `selectedPatient` so the user can easily upload multiple scans for the same patient, 
+    // but you can add `setSelectedPatient('');` here if you want it to completely reset.
   };
 
   const patientNameById = useMemo(() => {
@@ -182,12 +188,10 @@ export default function UploadScan() {
   // Filter, Sort, and Paginate Scans
   const filteredScans = useMemo(() => {
     const processed = displayedScans.filter(scan => {
-      // 1. Search filter
       const matchName = (scan.patientName || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchId = scan.patientId?.toString().includes(searchTerm);
       const passesSearch = matchName || matchId;
 
-      // 2. Status filter
       let passesStatus = true;
       if (statusFilter !== 'all') {
         if (statusFilter === 'processing') {
@@ -200,9 +204,7 @@ export default function UploadScan() {
       return passesSearch && passesStatus;
     });
 
-    // 3. Sorting
     processed.sort((a, b) => {
-      // Fallback to sorting by ID assuming higher ID = newer
       if (sortBy === 'newest') {
         return Number(b.id) - Number(a.id);
       } else {
@@ -238,7 +240,7 @@ export default function UploadScan() {
               <label className="text-sm font-semibold text-slate-700">
                 1. Select Patient <span className="text-red-500">*</span>
               </label>
-              <Select value={selectedPatient} onValueChange={setSelectedPatient} disabled={uploading || analyzing}>
+              <Select value={selectedPatient} onValueChange={setSelectedPatient} disabled={uploading || analyzing || !!completedScanId}>
                 <SelectTrigger className="w-full h-12 text-base">
                   <SelectValue placeholder="Search or choose a patient..." />
                 </SelectTrigger>
@@ -306,7 +308,7 @@ export default function UploadScan() {
                     <p className="text-sm text-slate-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                   </div>
                   
-                  {!uploading && !analyzing && (
+                  {!uploading && !analyzing && !completedScanId && (
                     <Button variant="ghost" size="icon" onClick={clearSelection} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
                       <X className="h-5 w-5" />
                     </Button>
@@ -338,26 +340,37 @@ export default function UploadScan() {
               )}
 
               {!analyzing && completedScanId && (
-                <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                      <CheckCircle2 className="h-5 w-5" />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-emerald-900">Analysis complete</p>
+                        <p className="text-sm text-emerald-700">The scan is ready to review.</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-emerald-900">Analysis complete</p>
-                      <p className="text-sm text-emerald-700">The scan is ready to review.</p>
-                    </div>
+                    <Button
+                      onClick={() => router.push(`/analysis/${completedScanId}`)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      View Report
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => router.push(`/analysis/${completedScanId}`)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+
+                  <Button 
+                    onClick={handleNewScan} 
+                    variant="outline"
+                    className="w-full h-14 text-lg border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
                   >
-                    View Report
+                    <UploadCloud className="mr-2 h-5 w-5" /> Scan Another Image
                   </Button>
                 </div>
               )}
 
-              {file && !uploading && !analyzing && (
+              {/* Added !completedScanId check to hide this when finished */}
+              {file && !uploading && !analyzing && !completedScanId && (
                 <Button 
                   onClick={handleUpload} 
                   disabled={!selectedPatient} 
@@ -367,7 +380,7 @@ export default function UploadScan() {
                 </Button>
               )}
               
-              {!selectedPatient && file && !uploading && !analyzing && (
+              {!selectedPatient && file && !uploading && !analyzing && !completedScanId && (
                 <p className="text-sm text-amber-600 flex items-center justify-center mt-3">
                   <AlertCircle className="h-4 w-4 mr-1" /> Please select a patient to continue
                 </p>

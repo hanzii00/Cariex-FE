@@ -162,14 +162,18 @@ export async function deleteDiagnosis(id: number): Promise<void> {
 export function mapDiagnosisToScan(d: DiagnosisItem | ScanItem | Record<string, unknown>): ScanItem {
   const record = d as Record<string, unknown>;
   const imageUrl = String(record.image_url ?? record.imageUrl ?? record.image ?? record.preview_url ?? "");
-  const status = String(record.status ?? ((record.has_caries as boolean | undefined) ? "analyzed" : "pending"));
+  const rawStatus = String(record.status ?? "").toLowerCase();
+  const hasCaries = Boolean(record.has_caries ?? record.hasCaries);
+  const analyzed = rawStatus === "completed" || rawStatus === "analyzed" || rawStatus === "done" || hasCaries;
 
   return {
     id: Number(record.id),
     imageUrl,
     type: "Diagnosis",
     date: String(record.uploaded_at ?? record.uploadedAt ?? ""),
-    status,
+    status: analyzed ? "analyzed" : (rawStatus || "pending"),
+    patientId: Number(record.patient_id ?? record.patientId ?? record.patient ?? NaN),
+    patientName: String(record.patient_name ?? record.patientName ?? ""),
     __diagnosis: d,
   } as ScanItem;
 }

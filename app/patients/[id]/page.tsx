@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -15,17 +15,26 @@ import { ScansGrid } from "./components/ScansGrid";
 
 import { getPatient } from "@/services/patient.service";
 import { getPatientRecords } from "@/services/record.service";
+import { fetchDiagnoses, mapDiagnosisToScan } from "@/services/scan.service";
+import type { Patient as PatientType } from "@/types/patient.type";
+import type { ScanItem } from "@/types/scan.type";
+import type { RecordItem } from "@/types/record.type";
+
+type PatientDetail = PatientType & {
+  full_name?: string;
+  name?: string;
+};
 
 export default function PatientDetailsPage() {
   const params = useParams();
   const id = Number(params.id);
 
-  const [patient, setPatient] = useState<any | null>(null);
-  const [scans, setScans] = useState<any[]>([]);
+  const [patient, setPatient] = useState<PatientDetail | null>(null);
+  const [scans, setScans] = useState<Array<ScanItem | RecordItem>>([]);
   const [loadingPatient, setLoadingPatient] = useState(true);
   const [loadingScans, setLoadingScans] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoadingPatient(true);
     setLoadingScans(true);
 
@@ -41,14 +50,15 @@ export default function PatientDetailsPage() {
     try {
       const s = await getPatientRecords(id);
       try {
-        const { fetchDiagnoses, mapDiagnosisToScan } = await import('@/services/scan.service');
         const diag = await fetchDiagnoses();
-        const diagScans = (diag || []).map(mapDiagnosisToScan);
+        const diagScans = (diag || [])
+          .map(mapDiagnosisToScan)
+          .filter((scan) => Number(scan.patientId) === id);
 
         setScans([ ...(s || []), ...diagScans ]);
       } catch (err) {
         console.error('Failed to load diagnoses', err);
-        setScans(s || []);
+        setScans((s || []) as Array<ScanItem | RecordItem>);
       }
 
     } catch (err) {
@@ -56,11 +66,11 @@ export default function PatientDetailsPage() {
     } finally {
       setLoadingScans(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   if (loadingPatient) {
     return (
@@ -88,7 +98,7 @@ export default function PatientDetailsPage() {
 
   return (
     <RequireAuth>
-      <DashboardLayout title={patient.name}>
+      <DashboardLayout title={patient.full_name || patient.name || `Patient #${id}`}>
         <div className="mb-6">
           <Link
             href="/patients"
